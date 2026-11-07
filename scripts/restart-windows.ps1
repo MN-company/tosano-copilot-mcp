@@ -2,7 +2,7 @@
 param()
 $ErrorActionPreference='Stop'
 Set-Location (Resolve-Path (Join-Path $PSScriptRoot '..'))
-& docker compose up -d --no-build tosano-mcp tosano-tunnel
+if (Test-Path 'secrets/openai-runtime-key.txt') { & docker compose --profile chatgpt up -d --no-build tosano-mcp tosano-tunnel } else { & docker compose up -d --no-build tosano-mcp }
 if ($LASTEXITCODE -ne 0) { throw 'Tosano Docker startup failed' }
 try {
   $health=Invoke-RestMethod 'http://127.0.0.1:3788/health' -TimeoutSec 5

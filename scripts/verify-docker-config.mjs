@@ -31,6 +31,7 @@ assert.match(compose,/ghcr\.io\/openai\/tunnel-client:v0\.0\.19/);
 assert.match(compose,/MCP_SERVER_URL: http:\/\/tosano-mcp:3788\/mcp/);
 assert.match(compose,/file:\/run\/secrets\/openai_runtime_key/);
 assert.match(compose,/profiles: \[login\]/);
+assert.match(compose,/profiles: \[chatgpt\]/);
 assert.match(compose,/readyz/);
 assert.equal(getConfig({MCP_BIND_HOST:'0.0.0.0'}).bindHost,'0.0.0.0');
 assert.equal(getConfig({}).bindHost,'127.0.0.1');

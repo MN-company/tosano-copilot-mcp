@@ -4,7 +4,7 @@ param()
 $ErrorActionPreference='Stop'
 Set-Location (Resolve-Path (Join-Path $PSScriptRoot '..'))
 Write-Host 'Temporarily stopping Tosano server and its tunnel, NOT WhatsApp Copilot.'
-& docker compose stop tosano-tunnel tosano-mcp
+& docker compose --profile chatgpt stop tosano-tunnel tosano-mcp
 if ($LASTEXITCODE -ne 0) { throw 'Could not stop Tosano services; refusing to share Chromium profile.' }
 try {
   Write-Host 'Open http://127.0.0.1:6080/vnc.html on the Windows PC.'
@@ -16,7 +16,7 @@ try {
   if ($LASTEXITCODE -ne 0) { Write-Warning 'Session doctor did not verify authentication; examine browser context, then retry.' }
 } finally {
   Write-Host 'Restarting Tosano MCP and tunnel from Docker Compose.'
-  & docker compose up -d --no-build tosano-mcp tosano-tunnel
+  if (Test-Path 'secrets/openai-runtime-key.txt') { & docker compose --profile chatgpt up -d --no-build tosano-mcp tosano-tunnel } else { & docker compose up -d --no-build tosano-mcp }
   if ($LASTEXITCODE -ne 0) { Write-Warning 'Automatic restart failed: run .\scripts\restart-windows.ps1' }
 }
 Write-Host 'Backend and tunnel restarted. Do not run doctor while MCP holds the Chromium profile.'

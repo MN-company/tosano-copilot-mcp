@@ -41,7 +41,20 @@ Lo script:
 4. ti fa accedere a LaTuaSpesa in una finestra locale (la password la scrivi tu, nessuno la salva);
 5. collega l'MCP a tutti gli agenti che trova: Claude Code, Claude Desktop, Cursor, VS Code, Windsurf, Gemini CLI, Codex CLI, LM Studio.
 
-Endpoint: `http://127.0.0.1:3788/mcp`. Registrazione manuale e ChatGPT: vedi [AGENTS.md](AGENTS.md).
+Endpoint: `http://127.0.0.1:3788/mcp`. Registrazione manuale: vedi [AGENTS.md](AGENTS.md).
+
+### ChatGPT (facoltativo)
+
+Claude, Cursor, Copilot, Gemini e Codex usano il server direttamente sul tuo computer: **non serve nient'altro**.
+
+ChatGPT invece gira nel cloud e non vede il tuo `localhost`. Per usarlo serve un tunnel OpenAI (Secure MCP Tunnel), che è un componente aggiuntivo. Se non lo configuri, tutto il resto funziona lo stesso.
+
+1. Su OpenAI crea un'app/connettore MCP con un tunnel e copia la **runtime API key** e l'**ID del tunnel**.
+2. Salva la chiave (resta nascosta, in `secrets/`, mai su git): `.\scripts\set-tunnel-key.ps1`
+3. Metti l'ID nel file `.env`: `CONTROL_PLANE_TUNNEL_ID=tunnel_...`
+4. Avvia il tunnel: `docker compose --profile chatgpt up -d tosano-tunnel`
+
+Gli script di login e riavvio avviano il tunnel da soli solo se trovano la chiave.
 
 ## Cosa sa fare
 

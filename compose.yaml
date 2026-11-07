@@ -27,7 +27,9 @@ services:
       start_period: 35s
     networks: [tosano_private]
 
+  # Optional: only for ChatGPT. Start with: docker compose --profile chatgpt up -d tosano-tunnel
   tosano-tunnel:
+    profiles: [chatgpt]
     image: ghcr.io/openai/tunnel-client:v0.0.19
     restart: unless-stopped
     init: true
@@ -35,7 +37,7 @@ services:
       tosano-mcp:
         condition: service_healthy
     environment:
-      CONTROL_PLANE_TUNNEL_ID: ${CONTROL_PLANE_TUNNEL_ID:?Set CONTROL_PLANE_TUNNEL_ID in .env}
+      CONTROL_PLANE_TUNNEL_ID: ${CONTROL_PLANE_TUNNEL_ID:-not-configured}
       MCP_SERVER_URL: http://tosano-mcp:3788/mcp
       LOG_LEVEL: info
       LOG_FORMAT: json

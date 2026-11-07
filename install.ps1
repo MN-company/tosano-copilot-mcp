@@ -61,4 +61,4 @@ if (-not $SkipAgents) {
 }
 
 Write-Host "`nFatto. Riavvia gli agenti aperti e chiedi: 'cosa c'è in offerta da Tosano?'" -ForegroundColor Green
-Write-Host 'ChatGPT: serve il tunnel OpenAI (scripts\set-tunnel-key.ps1, poi docker compose up -d tosano-tunnel).'
+Write-Host 'Facoltativo, solo per ChatGPT: scripts\set-tunnel-key.ps1 e poi docker compose --profile chatgpt up -d tosano-tunnel (vedi README).'

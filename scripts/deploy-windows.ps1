@@ -57,9 +57,12 @@ CheckExit 'Docker daemon'
 CheckExit 'Docker Compose'
 if (-not (Test-Path '.env')) { Copy-Item 'compose.env.example' '.env' }
 if (-not (Test-Path 'config/tosano.env')) { Copy-Item 'config/tosano.env.example' 'config/tosano.env' }
-Must (Test-Path 'secrets/openai-runtime-key.txt') 'Missing secrets/openai-runtime-key.txt. Run: .\scripts\set-tunnel-key.ps1'
-Must ((Get-Item 'secrets/openai-runtime-key.txt').Length -gt 12) 'Runtime key file is empty or too short'
-Must ([IO.File]::ReadAllText((Join-Path $root '.env')) -match 'CONTROL_PLANE_TUNNEL_ID=tunnel_[a-z0-9]{32}') 'Tunnel ID missing or invalid in .env'
+# The ChatGPT tunnel is optional: enabled only when the runtime key file exists.
+$chatgpt = Test-Path 'secrets/openai-runtime-key.txt'
+if ($chatgpt) {
+  Must ((Get-Item 'secrets/openai-runtime-key.txt').Length -gt 12) 'Runtime key file is empty or too short'
+  Must ([IO.File]::ReadAllText((Join-Path $root '.env')) -match 'CONTROL_PLANE_TUNNEL_ID=tunnel_[a-z0-9]{32}') 'Tunnel ID missing or invalid in .env'
+} else { Write-Host 'ChatGPT tunnel not configured (optional): deploying the local MCP only.' }
 $previous=Get-ComposeTag
 $priorImagePresent = $false
 if ($previous) {
@@ -124,19 +127,19 @@ try {
   Set-ComposeTag $version
   & docker compose config -q
   CheckExit 'Compose configuration'
-  & docker compose up -d --no-build tosano-mcp tosano-tunnel
+  if (Test-Path 'secrets/openai-runtime-key.txt') { & docker compose --profile chatgpt up -d --no-build tosano-mcp tosano-tunnel } else { & docker compose up -d --no-build tosano-mcp }
   CheckExit 'Compose startup'
   if (-not (Verify-Release $version)) { throw "Release $version did not pass health/MCP verification" }
-  if (-not (Verify-Tunnel)) { throw 'OpenAI tunnel did not become ready; verify runtime API key and tunnel permission' }
-  Write-Host "DEPLOYMENT PASS: Tosano MCP $version, FTS5, MCP tool discovery AND tunnel readiness." -ForegroundColor Green
+  if ($chatgpt -and -not (Verify-Tunnel)) { throw 'OpenAI tunnel did not become ready; verify runtime API key and tunnel permission' }
+  Write-Host "DEPLOYMENT PASS: Tosano MCP $version, FTS5, MCP tool discovery$(if ($chatgpt) { ' AND tunnel readiness' })." -ForegroundColor Green
   Write-Host 'NEXT: Docker login if needed; then verify Tosano Web tools from ChatGPT.'
 } catch {
   $failure=$_.Exception.Message
   Write-Warning "Deployment failed: $failure"
   if ($priorImagePresent -and $previous -and $previous -ne $version) {
     Set-ComposeTag $previous
-    & docker compose up -d --no-build tosano-mcp tosano-tunnel
-    if ($LASTEXITCODE -eq 0 -and (Verify-Release $previous) -and (Verify-Tunnel)) {
+    if (Test-Path 'secrets/openai-runtime-key.txt') { & docker compose --profile chatgpt up -d --no-build tosano-mcp tosano-tunnel } else { & docker compose up -d --no-build tosano-mcp }
+    if ($LASTEXITCODE -eq 0 -and (Verify-Release $previous) -and (-not $chatgpt -or (Verify-Tunnel))) {
       Write-Warning "ROLLBACK VERIFIED: restored Tosano $previous"
     } else { Write-Warning 'ROLLBACK COULD NOT BE VERIFIED. Inspect the Tosano service manually.' }
   } else {

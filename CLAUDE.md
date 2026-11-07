@@ -22,7 +22,7 @@ Manual registration, if needed:
 | Gemini CLI | `~/.gemini/settings.json` → `{"mcpServers":{"tosano":{"httpUrl":"http://127.0.0.1:3788/mcp"}}}` |
 | Codex CLI | `~/.codex/config.toml` → `[mcp_servers.tosano]` `url = "http://127.0.0.1:3788/mcp"` |
 | Claude Desktop | `npx -y mcp-remote http://127.0.0.1:3788/mcp --allow-http` |
-| ChatGPT | OpenAI Secure MCP Tunnel (`scripts/set-tunnel-key.ps1`, then `docker compose up -d tosano-tunnel`) |
+| ChatGPT (optional) | OpenAI Secure MCP Tunnel: `scripts/set-tunnel-key.ps1`, `CONTROL_PLANE_TUNNEL_ID` in `.env`, then `docker compose --profile chatgpt up -d tosano-tunnel`. Not needed for any local agent. |
 
 ## Using the tools
 
