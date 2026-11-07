@@ -1,0 +1,11 @@
+node_modules
+.git
+.env
+config/tosano.env
+secrets
+*.sqlite
+*.sqlite-*
+*.zip
+backups
+migration
+.DS_Store

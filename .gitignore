@@ -1,0 +1,12 @@
+.env
+node_modules/
+*.sqlite
+*.sqlite-*
+config/tosano.env
+secrets/*.txt
+!secrets/README.md
+backups/
+migration/
+package-lock.json.tmp
+.claude/
+*.tosano-backup

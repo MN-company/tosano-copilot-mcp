@@ -1,0 +1,79 @@
+name: tosano-copilot
+services:
+  tosano-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tosano-copilot-mcp:${TOSANO_IMAGE_TAG:-0.3.8}
+    init: true
+    user: pwuser
+    restart: unless-stopped
+    shm_size: "1gb"
+    env_file: ./config/tosano.env
+    environment:
+      HOME: /home/pwuser
+      MCP_BIND_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:3788:3788"
+    volumes:
+      - tosano_state:/home/pwuser/.tosano-copilot
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3788/health').then(r=>r.json()).then(x=>process.exit(x.ok&&x.fts5?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 35s
+    networks: [tosano_private]
+
+  tosano-tunnel:
+    image: ghcr.io/openai/tunnel-client:v0.0.19
+    restart: unless-stopped
+    init: true
+    depends_on:
+      tosano-mcp:
+        condition: service_healthy
+    environment:
+      CONTROL_PLANE_TUNNEL_ID: ${CONTROL_PLANE_TUNNEL_ID:?Set CONTROL_PLANE_TUNNEL_ID in .env}
+      MCP_SERVER_URL: http://tosano-mcp:3788/mcp
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      HEALTH_LISTEN_ADDR: 127.0.0.1:8080
+    secrets: [openai_runtime_key]
+    command: ["--control-plane.api-key=file:/run/secrets/openai_runtime_key"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    networks: [tosano_private]
+
+  tosano-login:
+    profiles: [login]
+    image: tosano-copilot-mcp:${TOSANO_IMAGE_TAG:-0.3.8}
+    init: true
+    user: pwuser
+    restart: "no"
+    shm_size: "1gb"
+    env_file: ./config/tosano.env
+    environment:
+      HOME: /home/pwuser
+      DISPLAY: ":99"
+    ports:
+      - "127.0.0.1:6080:6080"
+    volumes:
+      - tosano_state:/home/pwuser/.tosano-copilot
+    command: ["bash", "scripts/login-browser.sh", "src/login.mjs"]
+    networks: [tosano_private]
+
+volumes:
+  tosano_state:
+
+networks:
+  tosano_private:
+
+secrets:
+  openai_runtime_key:
+    file: ./secrets/openai-runtime-key.txt

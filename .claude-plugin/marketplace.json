@@ -1,0 +1,14 @@
+{
+  "name": "tosano-copilot",
+  "owner": { "name": "MN-company" },
+  "metadata": { "description": "Spesa su LaTuaSpesa / IperTosano guidata da un agente AI" },
+  "plugins": [
+    {
+      "name": "tosano",
+      "source": "./",
+      "description": "Fai la spesa Tosano con l'agente: ricerca, offerte, carrello con approvazione, ordini, ricette reali, menu settimanale, allergie della famiglia, dispensa, budget. Si installa da solo (Docker).",
+      "version": "0.5.0",
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Place the existing OpenAI tunnel **Runtime API Key** in a locally-created file named `openai-runtime-key.txt`, ONE LINE ONLY. Do not put it in source control or chat. This path is mounted read-only in the tunnel container as `/run/secrets/openai_runtime_key`. Never use an admin key here.

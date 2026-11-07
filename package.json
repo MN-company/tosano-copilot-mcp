@@ -1,0 +1,30 @@
+{
+  "name": "tosano-copilot-mcp",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Local-first Tosano shopping adapter and Streamable HTTP MCP server",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/server.mjs",
+    "login": "node --env-file=.env src/login.mjs",
+    "doctor": "node --env-file=.env src/doctor.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check src/server.mjs && node --check src/agent-db.mjs && node --check src/cart-planner.mjs && node --check src/cart-reconciliation.mjs && node --check src/smart-search.mjs && node --check src/cart-read-discovery.mjs && node --check src/client.mjs && node --check src/site-api-discovery.mjs && node --check src/discover-site.mjs && node --check src/discover-cart.mjs && node --check src/login.mjs && node --check src/site-service.mjs && node --check src/site-views.mjs && node --check src/site-paths.mjs && node --check src/allergens.mjs && node --check src/label.mjs && node --check src/safety.mjs && node --check src/profile.mjs && node --check src/openfoodfacts.mjs && node --check src/selling.mjs && node --check src/recipes.mjs && node --check src/basket.mjs && node --check src/glycemic.mjs && node --check src/recipe-db.mjs && node --check src/import-recipes.mjs && node --check src/planning.mjs",
+    "smoke": "node --env-file=.env src/smoke.mjs",
+    "discover-cart": "node --env-file=.env src/discover-cart.mjs",
+    "discover-site": "node --env-file=.env src/discover-site.mjs",
+    "verify:mcp": "node scripts/verify-mcp.mjs",
+    "release:preflight": "npm run check && npm test",
+    "verify:docker": "node scripts/verify-docker-config.mjs",
+    "recipes:import": "node src/import-recipes.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.0",
+    "express": "^5.1.0",
+    "playwright": "1.55.0",
+    "zod": "^4.1.0"
+  }
+}
