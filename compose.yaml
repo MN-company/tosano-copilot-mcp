@@ -27,7 +27,7 @@ services:
       start_period: 35s
     networks: [tosano_private]
 
-  # Optional: only for ChatGPT. Start with: docker compose --profile chatgpt up -d tosano-tunnel
+  # Optional: only for ChatGPT chat (web/app), which calls MCP from OpenAI's cloud. Local agents incl. Codex do not need it. Start with: docker compose --profile chatgpt up -d tosano-tunnel
   tosano-tunnel:
     profiles: [chatgpt]
     image: ghcr.io/openai/tunnel-client:v0.0.19

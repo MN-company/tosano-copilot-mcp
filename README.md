@@ -43,11 +43,11 @@ Lo script:
 
 Endpoint: `http://127.0.0.1:3788/mcp`. Registrazione manuale: vedi [AGENTS.md](AGENTS.md).
 
-### ChatGPT (facoltativo)
+### ChatGPT chat web/app (facoltativo)
 
-Claude, Cursor, Copilot, Gemini e Codex usano il server direttamente sul tuo computer: **non serve nient'altro**.
+Tutto ciò che gira **sul tuo computer** usa il server direttamente: **non serve nient'altro**. Vale per Claude Code, Claude Desktop, Cursor, VS Code Copilot, Gemini CLI e **Codex** (CLI, estensione IDE, app desktop: si configura in `~/.codex/config.toml`, lo fa l'installer).
 
-ChatGPT invece gira nel cloud e non vede il tuo `localhost`. Per usarlo serve un tunnel OpenAI (Secure MCP Tunnel), che è un componente aggiuntivo. Se non lo configuri, tutto il resto funziona lo stesso.
+Il tunnel serve **solo per le chat di ChatGPT** (chatgpt.com e app ChatGPT). Lì i connettori MCP vengono chiamati dai server di OpenAI, che non vedono il tuo `localhost`. Lo stesso vale per le attività di Codex nel cloud. Il tunnel OpenAI (Secure MCP Tunnel) è un componente aggiuntivo: se non lo configuri, tutto il resto funziona lo stesso.
 
 1. Su OpenAI crea un'app/connettore MCP con un tunnel e copia la **runtime API key** e l'**ID del tunnel**.
 2. Salva la chiave (resta nascosta, in `secrets/`, mai su git): `.\scripts\set-tunnel-key.ps1`

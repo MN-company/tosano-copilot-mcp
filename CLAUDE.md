@@ -20,9 +20,9 @@ Manual registration, if needed:
 | VS Code | user `mcp.json` → `{"servers":{"tosano":{"type":"http","url":"http://127.0.0.1:3788/mcp"}}}` |
 | Windsurf | `~/.codeium/windsurf/mcp_config.json` → `serverUrl` |
 | Gemini CLI | `~/.gemini/settings.json` → `{"mcpServers":{"tosano":{"httpUrl":"http://127.0.0.1:3788/mcp"}}}` |
-| Codex CLI | `~/.codex/config.toml` → `[mcp_servers.tosano]` `url = "http://127.0.0.1:3788/mcp"` |
+| Codex (CLI, IDE extension, desktop app) | `~/.codex/config.toml` → `[mcp_servers.tosano]` `url = "http://127.0.0.1:3788/mcp"`. Runs locally: no tunnel needed. |
 | Claude Desktop | `npx -y mcp-remote http://127.0.0.1:3788/mcp --allow-http` |
-| ChatGPT (optional) | OpenAI Secure MCP Tunnel: `scripts/set-tunnel-key.ps1`, `CONTROL_PLANE_TUNNEL_ID` in `.env`, then `docker compose --profile chatgpt up -d tosano-tunnel`. Not needed for any local agent. |
+| ChatGPT chat, web or app (optional) | Only here a tunnel is needed, because ChatGPT calls connectors from OpenAI's servers (same for Codex cloud tasks). OpenAI Secure MCP Tunnel: `scripts/set-tunnel-key.ps1`, `CONTROL_PLANE_TUNNEL_ID` in `.env`, then `docker compose --profile chatgpt up -d tosano-tunnel`. |
 
 ## Using the tools
 
