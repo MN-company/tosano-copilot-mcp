@@ -84,7 +84,7 @@ export function analyzeHabits(orders, now = Date.now()) {
   }).sort((a, b) => b.timesBought - a.timesBought);
   const due = items.filter(i => i.due || (i.staple && i.daysSinceLast >= 6));
   return { ordersAnalyzed: valid.length, due, frequent: items.filter(i => i.timesBought >= 2).slice(0, 40),
-    cartPlanInput: { addItems: due.map(i => ({ productId: i.productId, slug: i.slug, quantity: i.usualQuantity })) },
+    cartPlanInput: due.length ? { action: 'add', mode: 'ensure_minimum', addItems: due.slice(0, 20).map(i => ({ productId: i.productId, slug: i.slug, quantity: i.usualQuantity })) } : null,
     note: valid.length < 3 ? 'Pochi ordini con dettaglio: la stima delle abitudini è debole.' : 'Proposta basata sulla frequenza dei tuoi ordini; controllala prima di preparare il carrello.' };
 }
 

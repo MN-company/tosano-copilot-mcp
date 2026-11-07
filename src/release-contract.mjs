@@ -1,6 +1,6 @@
 /** Immutable release handshake; expected by scripts/verify-mcp.mjs. */
 export const RELEASE = Object.freeze({
-  version: '0.5.0',
+  version: '0.5.1',
   mcpContract: 'tosano-agent-v3',
   storageSchema: 'sqlite-fts5-v1',
   appId: 'asdk_app_6ae8857a20f481919f34fee45f503143'

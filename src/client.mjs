@@ -38,6 +38,7 @@ export class TosanoClient {
   #http;
   #config;
   #lastCart = null;
+  #lastRefresh = 0;
   #writeQueue = Promise.resolve();
   constructor(http, config) { this.#http = http; this.#config = config; }
 
@@ -124,11 +125,21 @@ export class TosanoClient {
       if (!this.#lastCart) throw new TosanoError('Cart GET endpoint not yet observed. Run scripts/discover-cart-windows.ps1 on Windows, open the cart in the Docker Chromium browser, and wait for a verified GET response.', 'UNVERIFIED_ENDPOINT');
       return { ...this.#lastCart, live: false, source: 'last_mutation_only', warning: 'Not a fresh read. May be outdated if modified in the site.' };
     }
+    // The site caches the cart per server session: open a fresh session first so changes
+    // made in the user's own browser are visible. Serialized with writes, throttled.
+    let sync = null;
+    if (this.#config.refreshSession) {
+      sync = await this.#serial(async () => {
+        if (Date.now() - this.#lastRefresh < 8000) return { refreshed: false, reason: 'recent' };
+        try { const r = await this.#config.refreshSession(); if (r.refreshed) this.#lastRefresh = Date.now(); return r; }
+        catch { return { refreshed: false, reason: 'refresh_failed' }; }
+      });
+    }
     const data = await this.#request('GET', cartReadPath);
     if (!data || !Array.isArray(data.cartItems) || !Number.isSafeInteger(data.cartId))
       throw new TosanoError('Cart read response does not match validated cart format', 'INVALID_CART_RESPONSE');
     this.#lastCart = cartView(data, { source: 'fresh_get', live: true });
-    return this.#lastCart;
+    return sync ? { ...this.#lastCart, sessionSync: { freshSession: sync.refreshed || sync.reason === 'recent', reason: sync.reason ?? null } } : this.#lastCart;
   }
   #checkWrites() {
     if (!this.#config.allowCartWrites) throw new TosanoError('Cart writes disabled. Set ALLOW_CART_WRITES=true after testing.', 'WRITES_DISABLED');

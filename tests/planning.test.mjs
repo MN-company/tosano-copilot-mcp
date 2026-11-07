@@ -57,7 +57,7 @@ test('smart reorder: intervals, due items, usual quantity', () => {
   const m = h.frequent.find(i => i.productId === 1);
   assert.deepEqual([m.avgIntervalDays, m.daysSinceLast, m.usualQuantity, m.due], [7, 7, 2, true]);
   assert.equal(h.frequent.find(i => i.productId === 2).due, false);
-  assert.deepEqual(h.cartPlanInput.addItems, [{ productId: 1, slug: 'latte', quantity: 2 }]);
+  assert.deepEqual(h.cartPlanInput, { action: 'add', mode: 'ensure_minimum', addItems: [{ productId: 1, slug: 'latte', quantity: 2 }] });
 });
 
 test('substitutes: similar and compatible only, blocked removed', () => {

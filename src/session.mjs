@@ -22,6 +22,29 @@ export async function openBrowserSession(config = getConfig()) {
   return contextPromise;
 }
 
+/** LaTuaSpesa keeps a per-session server copy of the cart: a session does not see cart
+ * changes made by other sessions (the user's own browser) until it starts a new one.
+ * The login survives in the persistent "X-Ebsn-Account" cookie, so dropping only the
+ * in-memory session cookies makes the server open a fresh session with the current cart.
+ * If the account is no longer recognised afterwards, the old cookies are restored.
+ * Returns { refreshed, dropped } with cookie NAMES only, never values.
+ */
+export async function refreshSiteSession(context, verify) {
+  // All paths (a session cookie may be scoped to /ebsn), only the site's own domain.
+  const all = (await context.cookies()).filter(c => /^\.?(www\.)?latuaspesa\.com$/.test(c.domain));
+  const session = all.filter(c => c.expires === -1);
+  if (!session.length) return { refreshed: false, reason: 'no_session_cookies' };
+  if (!all.some(c => c.name === 'X-Ebsn-Account' && c.expires !== -1)) return { refreshed: false, reason: 'no_persistent_login' };
+  for (const c of session) await context.clearCookies({ name: c.name, domain: c.domain, path: c.path });
+  let ok = false;
+  try { ok = await verify(); } catch { ok = false; }
+  if (!ok) {
+    await context.addCookies(session);
+    return { refreshed: false, reason: 'restored_previous_session', dropped: session.map(c => c.name) };
+  }
+  return { refreshed: true, dropped: session.map(c => c.name) };
+}
+
 /** Actually asks Tosano who the session belongs to, instead of guessing from cookies.
  * Does not include email, address, account ID, or other personal data in output.
  */

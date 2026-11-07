@@ -1,6 +1,6 @@
 {
   "name": "tosano",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Tosano Copilot: spesa su LaTuaSpesa/IperTosano con approvazione esplicita per carrello, ordini e checkout. Server MCP locale in Docker, installazione automatica.",
   "author": { "name": "MN-company", "url": "https://github.com/MN-company" },
   "homepage": "https://github.com/MN-company/tosano-copilot-mcp",

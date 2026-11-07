@@ -8,7 +8,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { z } from 'zod/v4';
 import { getConfig } from './config.mjs';
-import { openBrowserSession, sessionStatus, closeBrowserSession } from './session.mjs';
+import { openBrowserSession, sessionStatus, closeBrowserSession, refreshSiteSession } from './session.mjs';
 import { contextualConfig } from './context-hash.mjs';
 import { TosanoClient, TosanoError } from './client.mjs';
 import { checkProduct } from './preferences.mjs';
@@ -37,7 +37,11 @@ try { const legacy=JSON.parse(await fs.readFile(legacyFile,'utf8'));store.import
 catch(e) { if(e.code!=='ENOENT') console.error('Legacy preference file could not be imported; original preserved.'); }
 let clientPromise;
 async function getClient(){
-  if(!clientPromise)clientPromise=openBrowserSession(config).then(context=>new TosanoClient(context.request,contextualConfig(context,config)))
+  if(!clientPromise)clientPromise=openBrowserSession(config).then(context=>{
+      let client;
+      const cfg={...contextualConfig(context,config),
+        refreshSession:()=>refreshSiteSession(context,async()=>(await client.verifySession()).authenticatedWithTosano==='verified')};
+      return client=new TosanoClient(context.request,cfg);})
     .catch(e=>{clientPromise=undefined;throw e;});
   return clientPromise;
 }
