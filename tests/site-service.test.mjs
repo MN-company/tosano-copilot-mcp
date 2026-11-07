@@ -143,3 +143,9 @@ test('order_cancel refused when site marks order not deletable', async () => {
   const { planner } = setup({ cart: baseCart(), order: { orderId: 4, isDeletable: false } });
   await assert.rejects(planner.prepare('order_cancel', { orderId: 4 }), { code: 'ORDER_NOT_CANCELLABLE' });
 });
+
+test('list estimate prices weighed items per kg', async () => {
+  const { listEstimate } = await import('../src/site-service.mjs');
+  const e = listEstimate({ items: [{ productId: 1, name: 'CLEMENTINE', quantity: 1, weight: 2, unitPrice: 2.28 }, { productId: 2, name: 'SALE', quantity: 1, weight: 0, unitPrice: 0.3 }] }, 4.8);
+  assert.deepEqual([e.lines[0].estimate, e.lines[1].estimate, e.estimatedAdded, e.estimatedTotalAfter], [4.56, 0.3, 4.86, 9.66]);
+});

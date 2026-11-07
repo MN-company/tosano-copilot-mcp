@@ -147,6 +147,21 @@ export class SiteService {
 }
 
 /** Kind -> {flag, baseline(read state), validate, execute(once), verify(read back)} */
+/** Estimated cost of a list: weighed items are priced per kg (unitPrice x weight). */
+export function listEstimate(list, cartTotalBefore) {
+  const r2 = n => Math.round(n * 100) / 100;
+  const lines = (list.items ?? []).map(i => {
+    const q = Number(i.quantity) > 0 ? Number(i.quantity) : 1, w = Number(i.weight) > 0 ? Number(i.weight) : 0, u = Number(i.unitPrice);
+    const est = Number.isFinite(u) ? r2(w ? u * w * q : u * q) : null;
+    return { productId: i.productId, name: i.name, quantity: q, ...(w ? { weighedKg: w * q, pricePerKg: u } : { unitPrice: u }), estimate: est };
+  });
+  const added = r2(lines.reduce((a, l) => a + (l.estimate ?? 0), 0));
+  return { cartTotalBefore, lines, estimatedAdded: added,
+    estimatedTotalAfter: Number.isFinite(cartTotalBefore) ? r2(cartTotalBefore + added) : null,
+    ...(lines.some(l => l.estimate === null) ? { incompleteEstimate: true } : {}),
+    priceNote: 'Stima: i prodotti a peso usano prezzo al kg x peso indicato; il peso reale alla consegna può variare. Escluso eventuale imballaggio.' };
+}
+
 export class SiteActionPlanner {
   #queue = Promise.resolve();
   constructor(store, client, profileId = 'default', prefsFn = () => store.getPreferences(profileId)) {
@@ -213,14 +228,16 @@ export class SiteActionPlanner {
         execute: p => c.siteWrite('/ebsn/api/wishlist/delete', { list_id: p.listId }),
         verify: async p => { const ls = await s.lists(); const gone = !ls.lists.some(l => l.listId === p.listId); return { status: gone ? 'confirmed' : 'missing', lists: ls.lists }; } },
       list_to_cart: { flag: 'allowCartWrites',
-        baseline: async p => { const l = await s.list(p.listId), cb = await cartBase(); return { fp: sha([l, cb.fp]), view: { list: l, cartTotalBefore: cb.view.total }, before: cb.view }; },
+        baseline: async p => { const l = await s.list(p.listId), cb = await cartBase(); return { fp: sha([l, cb.fp]), view: { list: l, ...listEstimate(l, cb.view.total) }, before: cb.view }; },
         execute: p => c.siteWrite('/ebsn/api/cart/add-all-from-wishlist', { list_id: p.listId, ...NS }),
         verify: async (p, base) => {
           const after = await c.readCart(), changed = diffCart(base.before, after);
           const perItem = base.view.list.items.map(i => ({ productId: i.productId, name: i.name,
             status: changed.some(x => x.productId === i.productId) ? 'confirmed' : 'missing' }));
           const n = perItem.filter(x => x.status === 'confirmed').length;
-          return { status: n === perItem.length ? 'confirmed' : n ? 'partial' : 'missing', perItem, cart: after };
+          return { status: n === perItem.length ? 'confirmed' : n ? 'partial' : 'missing', perItem, cart: after,
+            listStillFull: { listId: p.listId, items: base.view.list.items.filter(i => i.itemId).map(i => ({ itemId: i.itemId, productId: i.productId })),
+              note: "Il sito non svuota la lista. Dopo l'ordine confermato proponi all'utente di svuotarla (tosano_site_list_remove_items con questi items)." } };
         } },
       reorder: { flag: 'allowCartWrites',
         baseline: async p => { const o = await s.order(p.orderId), cb = await cartBase(); return { fp: sha([o.orderId, o.items.length, cb.fp]), view: { order: o, cartTotalBefore: cb.view.total }, before: cb.view }; },
