@@ -273,6 +273,26 @@ function makeServer(){
   server.registerTool('tosano_gift_code',{description:'Apply or remove a coupon/gift code on the cart, only with a code the user gave or chose. Re-reads the cart total.',
     inputSchema:{code:z.string().min(3).max(40),action:z.enum(['apply','remove']),userExplicitlyRequested:z.literal(true)},annotations:write},
     safeTool(async({code,action})=>(await siteW('cart')).giftCode(code,action)));
+  // Tosano's weekly flyer = these advertising categories on LaTuaSpesa.
+  const FLYER=[{key:'prezzi-bomba',name:'Prezzi bomba',categoryId:42785},{key:'prezzi-imperdibili',name:'Prezzi imperdibili',categoryId:44652},{key:'prezzi-freschi',name:'Prezzi freschi',categoryId:42786}];
+  server.registerTool('tosano_flyer',{description:'The current Tosano flyer (volantino): products in the "Prezzi bomba", "Prezzi imperdibili" and "Prezzi freschi" sections of LaTuaSpesa. Optional query filters by name; products blocked by the household allergy/brand rules are marked. Read-only.',
+    inputSchema:{sections:z.array(z.enum(['prezzi-bomba','prezzi-imperdibili','prezzi-freschi'])).min(1).max(3).optional(),query:z.string().max(80).optional(),hideBlocked:z.boolean().optional(),limitPerSection:z.number().int().min(1).max(200).optional()},annotations:read},
+    safeTool(async({sections,query,hideBlocked=false,limitPerSection=40})=>{
+      const client=await getClient(),want=FLYER.filter(f=>!sections||sections.includes(f.key)),q=String(query??'').toLocaleLowerCase('it').trim(),out=[];
+      for(const f of want){
+        const items=[];
+        for(let page=1;page<=12;page++){
+          const r=await client.listProducts({categoryId:f.categoryId,page,pageSize:60});
+          items.push(...r.products);if(r.products.length<60)break;
+        }
+        try{store.recordPrices(items);}catch{}
+        const shown=items.filter(p=>!q||String(p.name).toLocaleLowerCase('it').includes(q)).map(p=>{let c;try{c=checkProduct(p,prefs());}catch{c={blockers:[],unknown:['check_failed']};}
+          return {productId:p.productId,slug:p.slug,name:p.name,brand:p.brand,unitPrice:p.unitPrice,pricePerUnit:p.pricePerUnit,unit:p.unit,category:p.category,
+            compatibility:c.blockers.length?'blocked':c.unknown.length?'da_verificare':'not_blocked_by_configured_rules'};}).filter(p=>!(hideBlocked&&p.compatibility==='blocked'));
+        out.push({section:f.name,url:'https://www.latuaspesa.com/category/advertising/'+f.key,count:shown.length,products:shown.slice(0,limitPerSection),...(shown.length>limitPerSection?{more:shown.length-limitPerSection,hint:'usa query per filtrare o limitPerSection'}:{})});
+      }
+      return {sections:out,note:'Prezzi del volantino online LaTuaSpesa per il punto vendita selezionato; la compatibilità è basata sui dati di elenco, verifica il singolo prodotto con tosano_check_product.'};
+    }));
   server.registerTool('tosano_offers',{description:'Products currently on promotion matching a query, ranked by saved preferences and comparable price.',
     inputSchema:{query:z.string().min(1).max(150),limit:z.number().int().min(1).max(40).optional()},annotations:read},
     safeTool(async({query,limit=20})=>{const client=await getClient(),r=await client.search(query,{pageSize:60,promo:true});

@@ -55,7 +55,7 @@ export class SiteService {
   // ---- catalog extras
   async categories(depth = 2) { return categoriesView(await this.client.siteGet('/ebsn/api/category', { filtered: true, depth }), depth); }
   async categoryBySlug(slug) {
-    if (!/^[a-z0-9-]{2,120}$/.test(slug)) throw new TosanoError('Invalid category slug', 'INVALID_ARGUMENT');
+    if (!/^[a-z0-9-]{2,60}(\/[a-z0-9-]{2,60}){0,2}$/.test(slug)) throw new TosanoError('Invalid category slug', 'INVALID_ARGUMENT');
     const c = await this.client.siteGet('/ebsn/api/category', { slug, filtered: true });
     return categoriesView([c], 2).categories[0] ?? null;
   }
